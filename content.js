@@ -1,16 +1,21 @@
 // Auto-reload when extension context is invalidated
 if (!chrome.runtime?.id) {
-  console.log('Extension context invalidated, reloading page...');
+  console.log("[ClipLingua] Extension context invalidated, reloading page...");
   window.location.reload();
+  throw new Error("Extension context invalidated"); // Stop execution
 }
 
 // Inject page-context bridge for CKEditor access
 (function injectBridge() {
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('ckeditor-bridge.js');
-  script.onload = function() {
+  const script = document.createElement("script");
+  script.src = chrome.runtime.getURL("ckeditor-bridge.js");
+  script.onload = function () {
     this.remove();
-    console.log('[ClipLingua] CKEditor bridge injected');
+  };
+  script.onerror = function () {
+    console.error(
+      "[ClipLingua] Failed to load CKEditor bridge - extension may need reload"
+    );
   };
   (document.head || document.documentElement).appendChild(script);
 })();
@@ -25,7 +30,7 @@ const DOUBLE_SHIFT_DELAY = 300;
 
 async function loadHotkey() {
   customHotkey = await new Promise((resolve) => {
-    chrome.storage.sync.get(['customHotkey'], (result) => {
+    chrome.storage.sync.get(["customHotkey"], (result) => {
       resolve(result.customHotkey);
     });
   });
@@ -47,11 +52,20 @@ function removeFloatingPopup() {
 }
 
 function createFloatingPopup(x, y) {
+  // Check if extension context is still valid
+  if (!chrome.runtime?.id) {
+    console.log(
+      "[ClipLingua] Extension context invalidated, reloading page..."
+    );
+    window.location.reload();
+    return;
+  }
+
   removeFloatingPopup();
 
-  floatingPopup = document.createElement('iframe');
-  floatingPopup.id = 'cliplingua-floating-popup';
-  floatingPopup.src = chrome.runtime.getURL('floating-popup.html');
+  floatingPopup = document.createElement("iframe");
+  floatingPopup.id = "cliplingua-floating-popup";
+  floatingPopup.src = chrome.runtime.getURL("floating-popup.html");
   floatingPopup.style.cssText = `
     position: fixed;
     z-index: 2147483647;
@@ -65,7 +79,7 @@ function createFloatingPopup(x, y) {
 
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  
+
   let left = x + 15;
   let initialTop = y + 5;
 
@@ -75,7 +89,7 @@ function createFloatingPopup(x, y) {
   if (left < 10) {
     left = 10;
   }
-  
+
   if (initialTop < 10) {
     initialTop = 10;
   }
@@ -86,106 +100,145 @@ function createFloatingPopup(x, y) {
   document.body.appendChild(floatingPopup);
 }
 
-window.addEventListener('message', (event) => {
+window.addEventListener("message", (event) => {
   // Check if extension context is still valid
   if (!chrome.runtime?.id) {
     window.location.reload();
     return;
   }
-  
+
   // Security: Validate message origin and source
-  const extensionOrigin = chrome.runtime.getURL('').slice(0, -1);
-  
+  const extensionOrigin = chrome.runtime.getURL("").slice(0, -1);
+
   // Only accept messages from extension iframe
   if (event.origin !== extensionOrigin) {
     return;
   }
-  
+
   if (floatingPopup && event.source !== floatingPopup.contentWindow) {
     return;
   }
-  
-  if (event.data.type === 'POPUP_READY' && floatingPopup) {
+
+  if (event.data.type === "POPUP_READY" && floatingPopup) {
     const textToSend = pendingText || window.getSelection().toString().trim();
     const isInputContext = !!activeInputField;
-    floatingPopup.contentWindow.postMessage({
-      type: 'SELECTION_DATA',
-      text: textToSend,
-      isInputContext: isInputContext
-    }, extensionOrigin);
+    floatingPopup.contentWindow.postMessage(
+      {
+        type: "SELECTION_DATA",
+        text: textToSend,
+        isInputContext: isInputContext,
+      },
+      extensionOrigin
+    );
     pendingText = null;
-  } else if (event.data.type === 'CLOSE_POPUP') {
+  } else if (event.data.type === "CLOSE_POPUP") {
     removeFloatingPopup();
-  } else if (event.data.type === 'SET_HEIGHT' && event.data.height) {
+  } else if (event.data.type === "SET_HEIGHT" && event.data.height) {
     const height = Math.min(event.data.height, 600);
     floatingPopup.style.height = `${height}px`;
-    
+
     const viewportHeight = window.innerHeight;
     const currentTop = parseFloat(floatingPopup.style.top);
     if (currentTop + height > viewportHeight) {
       const newTop = Math.max(10, viewportHeight - height - 20);
       floatingPopup.style.top = `${newTop}px`;
     }
-    floatingPopup.style.opacity = '1';
-  } else if (event.data.type === 'COPY_TEXT' && event.data.text) {
-    navigator.clipboard.writeText(event.data.text).catch(err => {
-      console.error('Copy failed:', err);
+    floatingPopup.style.opacity = "1";
+  } else if (event.data.type === "COPY_TEXT" && event.data.text) {
+    navigator.clipboard.writeText(event.data.text).catch((err) => {
+      console.error("Copy failed:", err);
     });
-  } else if (event.data.type === 'APPLY_TO_INPUT' && event.data.text) {
+  } else if (event.data.type === "APPLY_TO_INPUT" && event.data.text) {
     if (activeInputField) {
       if (activeInputField.isContentEditable) {
         activeInputField.textContent = event.data.text;
-        activeInputField.dispatchEvent(new Event('input', { bubbles: true }));
+        activeInputField.dispatchEvent(new Event("input", { bubbles: true }));
       } else {
         activeInputField.value = event.data.text;
-        activeInputField.dispatchEvent(new Event('input', { bubbles: true }));
-        activeInputField.dispatchEvent(new Event('change', { bubbles: true }));
+        activeInputField.dispatchEvent(new Event("input", { bubbles: true }));
+        activeInputField.dispatchEvent(new Event("change", { bubbles: true }));
       }
     }
   }
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'TRANSLATE_SELECTION' && message.text) {
+  if (message.type === "TRANSLATE_SELECTION" && message.text) {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
-    
+
     createFloatingPopup(rect.right, rect.bottom);
   }
 });
 
 document.addEventListener("keydown", async (e) => {
   // Double Shift detection for quick apply
-  if (e.key === 'Shift') {
+  if (e.key === "Shift") {
     const now = Date.now();
     if (now - lastShiftTime < DOUBLE_SHIFT_DELAY) {
       // Double Shift detected
       e.preventDefault();
       const target = document.activeElement;
-      const isInputField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
-      
+      const isInputField =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable);
+
       if (isInputField) {
         // Check if extension context is still valid
         if (!chrome.runtime?.id) {
-          console.log('[ClipLingua] Extension context invalidated, reloading page...');
+          console.log(
+            "[ClipLingua] Extension context invalidated, reloading page..."
+          );
           window.location.reload();
           return;
         }
-        
+
         // Quick apply - check grammar and apply directly
-        const textToCheck = target.isContentEditable 
+        const textToCheck = target.isContentEditable
           ? target.textContent.trim()
-          : (target.value || '').trim();
-        
+          : (target.value || "").trim();
+
         if (textToCheck) {
+          // Create status dot
+          const statusDot = document.createElement("div");
+          statusDot.className = "cliplingua-status-dot";
+          statusDot.setAttribute("data-status", "processing");
+
+          // Position dot at middle-left of input
+          const rect = target.getBoundingClientRect();
+          statusDot.style.top = `${
+            rect.top + window.scrollY + rect.height / 2 - 4
+          }px`;
+          statusDot.style.left = `${rect.left + window.scrollX - 12}px`;
+          document.body.appendChild(statusDot);
+
           try {
             const response = await chrome.runtime.sendMessage({
               type: MESSAGE_TYPES.CHECK_GRAMMAR,
-              text: textToCheck
+              text: textToCheck,
             });
-            
+
             if (response && response.success && response.result) {
+              // Replace with success dot
+              const rect = target.getBoundingClientRect();
+              const successDot = document.createElement("div");
+              successDot.className = "cliplingua-status-dot";
+              successDot.setAttribute("data-status", "success");
+              successDot.style.top = `${
+                rect.top + window.scrollY + rect.height / 2 - 4
+              }px`;
+              successDot.style.left = `${rect.left + window.scrollX - 12}px`;
+
+              statusDot.remove();
+              document.body.appendChild(successDot);
+
+              setTimeout(() => {
+                successDot.remove();
+              }, 700);
+
               if (target.isContentEditable) {
                 const isLexical = isLexicalEditorElement(target);
                 const isCk = isCKEditorElement(target);
@@ -197,27 +250,70 @@ document.addEventListener("keydown", async (e) => {
                 } else {
                   target.textContent = response.result;
                   target.dispatchEvent(
-                    new InputEvent('input', { bubbles: true, inputType: 'insertText' })
+                    new InputEvent("input", {
+                      bubbles: true,
+                      inputType: "insertText",
+                    })
                   );
                 }
               } else {
                 target.value = response.result;
-                
-                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
-                
-                if (target.tagName === 'INPUT') {
+
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                  window.HTMLInputElement.prototype,
+                  "value"
+                ).set;
+                const nativeTextAreaValueSetter =
+                  Object.getOwnPropertyDescriptor(
+                    window.HTMLTextAreaElement.prototype,
+                    "value"
+                  ).set;
+
+                if (target.tagName === "INPUT") {
                   nativeInputValueSetter.call(target, response.result);
-                } else if (target.tagName === 'TEXTAREA') {
+                } else if (target.tagName === "TEXTAREA") {
                   nativeTextAreaValueSetter.call(target, response.result);
                 }
-                
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
+
+                target.dispatchEvent(new Event("input", { bubbles: true }));
+                target.dispatchEvent(new Event("change", { bubbles: true }));
               }
+            } else {
+              // Replace with error dot
+              const rect = target.getBoundingClientRect();
+              const errorDot = document.createElement("div");
+              errorDot.className = "cliplingua-status-dot";
+              errorDot.setAttribute("data-status", "error");
+              errorDot.style.top = `${
+                rect.top + window.scrollY + rect.height / 2 - 4
+              }px`;
+              errorDot.style.left = `${rect.left + window.scrollX - 12}px`;
+
+              statusDot.remove();
+              document.body.appendChild(errorDot);
+
+              setTimeout(() => {
+                errorDot.remove();
+              }, 700);
             }
           } catch (err) {
-            console.error('[ClipLingua] Quick apply failed:', err);
+            console.error("[ClipLingua] Quick apply failed:", err);
+            // Replace with error dot
+            const rect = target.getBoundingClientRect();
+            const errorDot = document.createElement("div");
+            errorDot.className = "cliplingua-status-dot";
+            errorDot.setAttribute("data-status", "error");
+            errorDot.style.top = `${
+              rect.top + window.scrollY + rect.height / 2 - 4
+            }px`;
+            errorDot.style.left = `${rect.left + window.scrollX - 12}px`;
+
+            statusDot.remove();
+            document.body.appendChild(errorDot);
+
+            setTimeout(() => {
+              errorDot.remove();
+            }, 700);
           }
         }
       }
@@ -229,28 +325,41 @@ document.addEventListener("keydown", async (e) => {
 
   if (!customHotkey) return;
 
-  const matches = 
-    (customHotkey.ctrl === e.ctrlKey) &&
-    (customHotkey.shift === e.shiftKey) &&
-    (customHotkey.alt === e.altKey) &&
-    (customHotkey.meta === e.metaKey) &&
-    (customHotkey.key.toUpperCase() === e.key.toUpperCase());
+  const matches =
+    customHotkey.ctrl === e.ctrlKey &&
+    customHotkey.shift === e.shiftKey &&
+    customHotkey.alt === e.altKey &&
+    customHotkey.meta === e.metaKey &&
+    customHotkey.key.toUpperCase() === e.key.toUpperCase();
 
   if (matches) {
     e.preventDefault();
-    
+
     const target = e.target;
-    const isInputField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
-    
+    const isInputField =
+      target &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable);
+
     if (isInputField) {
-      const textToProcess = target.isContentEditable 
+      const textToProcess = target.isContentEditable
         ? window.getSelection().toString().trim()
-        : (target.value || '');
-      
+        : target.value || "";
+
       activeInputField = target;
-      
-      console.log('[content] Input field detected - target:', target.tagName, 'isContentEditable:', target.isContentEditable, 'activeInputField:', activeInputField, 'textToProcess:', textToProcess);
-      
+
+      console.log(
+        "[content] Input field detected - target:",
+        target.tagName,
+        "isContentEditable:",
+        target.isContentEditable,
+        "activeInputField:",
+        activeInputField,
+        "textToProcess:",
+        textToProcess
+      );
+
       if (textToProcess) {
         pendingText = textToProcess;
         const rect = target.getBoundingClientRect();
@@ -260,9 +369,7 @@ document.addEventListener("keydown", async (e) => {
       activeInputField = null;
       pendingText = null;
       const selectedText = window.getSelection().toString().trim();
-      
-      console.log('[content] Regular selection - selectedText:', selectedText);
-      
+
       if (selectedText) {
         const selection = window.getSelection();
         const range = selection.getRangeAt(0);
@@ -274,14 +381,14 @@ document.addEventListener("keydown", async (e) => {
   }
 });
 
-document.addEventListener('click', (e) => {
+document.addEventListener("click", (e) => {
   if (floatingPopup && !floatingPopup.contains(e.target)) {
     removeFloatingPopup();
   }
 });
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && floatingPopup) {
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && floatingPopup) {
     removeFloatingPopup();
   }
 });
@@ -289,34 +396,35 @@ document.addEventListener('keydown', (e) => {
 function isLexicalEditorElement(el) {
   return (
     el.closest('[data-lexical-editor="true"]') ||
-    el.hasAttribute('data-lexical-editor')
+    el.hasAttribute("data-lexical-editor")
   );
 }
 
 function isCKEditorElement(el) {
   if (!el) return false;
-  const hasTeamsTid = el.getAttribute('data-tid') === 'ckeditor';
-  const hasCKEditorClasses = el.classList.contains('ck') &&
-    el.classList.contains('ck-content') &&
-    el.classList.contains('ck-editor__editable');
+  const hasTeamsTid = el.getAttribute("data-tid") === "ckeditor";
+  const hasCKEditorClasses =
+    el.classList.contains("ck") &&
+    el.classList.contains("ck-content") &&
+    el.classList.contains("ck-editor__editable");
   return hasTeamsTid || hasCKEditorClasses;
 }
 
 async function replaceLexicalEditorText(editableEl, newText) {
   editableEl.focus();
 
-  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
   const selectAllEventInit = {
     bubbles: true,
     cancelable: true,
-    key: 'a',
-    code: 'KeyA',
-    [isMac ? 'metaKey' : 'ctrlKey']: true,
+    key: "a",
+    code: "KeyA",
+    [isMac ? "metaKey" : "ctrlKey"]: true,
   };
 
   // Let Lexical handle "Select All"
-  editableEl.dispatchEvent(new KeyboardEvent('keydown', selectAllEventInit));
-  editableEl.dispatchEvent(new KeyboardEvent('keyup', selectAllEventInit));
+  editableEl.dispatchEvent(new KeyboardEvent("keydown", selectAllEventInit));
+  editableEl.dispatchEvent(new KeyboardEvent("keyup", selectAllEventInit));
 
   // Give Lexical a tick to update its selection
   await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -325,35 +433,34 @@ async function replaceLexicalEditorText(editableEl, newText) {
   const backspaceInit = {
     bubbles: true,
     cancelable: true,
-    key: 'Backspace',
-    code: 'Backspace',
+    key: "Backspace",
+    code: "Backspace",
   };
-  editableEl.dispatchEvent(new KeyboardEvent('keydown', backspaceInit));
-  editableEl.dispatchEvent(new KeyboardEvent('keyup', backspaceInit));
+  editableEl.dispatchEvent(new KeyboardEvent("keydown", backspaceInit));
+  editableEl.dispatchEvent(new KeyboardEvent("keyup", backspaceInit));
 
   await new Promise((resolve) => requestAnimationFrame(resolve));
 
   // Insert replacement text - ONLY use beforeinput, not input
-  const beforeInput = new InputEvent('beforeinput', {
+  const beforeInput = new InputEvent("beforeinput", {
     bubbles: true,
     cancelable: true,
-    inputType: 'insertText',
+    inputType: "insertText",
     data: newText,
   });
   editableEl.dispatchEvent(beforeInput);
-  
+
   // Do NOT dispatch a second 'input' event - Lexical will insert twice!
 }
 
 async function replaceCKEditorText(rootElement, newText) {
   // 1. Find the actual editable element CKEditor uses
-  const editable =
-    rootElement.matches('[contenteditable="true"]')
-      ? rootElement
-      : rootElement.querySelector('[contenteditable="true"]');
+  const editable = rootElement.matches('[contenteditable="true"]')
+    ? rootElement
+    : rootElement.querySelector('[contenteditable="true"]');
 
   if (!editable) {
-    console.warn('[ClipLingua] CKEditor editable element not found');
+    console.warn("[ClipLingua] CKEditor editable element not found");
     return;
   }
 
@@ -369,81 +476,74 @@ async function replaceCKEditorText(rootElement, newText) {
   // 3. Try execCommand approach (may trigger trusted beforeinput/input)
   try {
     const oldText = editable.textContent.trim();
-    
+
     // Clear content using execCommand so CKEditor sees it
-    document.execCommand('delete', false, null);
+    document.execCommand("delete", false, null);
 
     // Insert the new text via execCommand
-    const success = document.execCommand('insertText', false, newText);
-    
-    console.log('[ClipLingua] execCommand insertText result:', success);
+    const success = document.execCommand("insertText", false, newText);
 
     // Trigger change events
-    editable.dispatchEvent(new Event('input', { bubbles: true }));
-    editable.dispatchEvent(new Event('change', { bubbles: true }));
-    
+    editable.dispatchEvent(new Event("input", { bubbles: true }));
+    editable.dispatchEvent(new Event("change", { bubbles: true }));
+
     // Wait a moment and verify text actually changed
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     const currentText = editable.textContent.trim();
     if (currentText === newText) {
-      console.log('[ClipLingua] execCommand succeeded');
       return;
     }
-    
-    console.warn('[ClipLingua] execCommand returned true but text unchanged:', currentText);
   } catch (e) {
-    console.warn('[ClipLingua] execCommand failed:', e);
+    // Continue to fallback methods
   }
 
   // 4. Fallback: try page-context bridge
-  console.log('[ClipLingua] Trying page-context bridge');
-  const bridgeId = 'cliplingua-' + Date.now();
-  editable.setAttribute('data-cliplingua-id', bridgeId);
+  const bridgeId = "cliplingua-" + Date.now();
+  editable.setAttribute("data-cliplingua-id", bridgeId);
   const selector = `[data-cliplingua-id="${bridgeId}"]`;
-  
+
   try {
-    const requestId = 'req-' + Date.now() + '-' + Math.random();
-    
+    const requestId = "req-" + Date.now() + "-" + Math.random();
+
     // Wait for response from page context
     const result = await new Promise((resolve) => {
       const timeout = setTimeout(() => {
         cleanup();
-        resolve({ success: false, error: 'Timeout' });
+        resolve({ success: false, error: "Timeout" });
       }, 2000);
-      
+
       const cleanup = () => {
         clearTimeout(timeout);
-        window.removeEventListener('__cliplingua_set_ck_text_response', handler);
+        window.removeEventListener(
+          "__cliplingua_set_ck_text_response",
+          handler
+        );
       };
-      
+
       const handler = (event) => {
         if (event.detail.requestId === requestId) {
           cleanup();
           resolve(event.detail);
         }
       };
-      
-      window.addEventListener('__cliplingua_set_ck_text_response', handler);
-      
+
+      window.addEventListener("__cliplingua_set_ck_text_response", handler);
+
       // Send request to page context
-      window.dispatchEvent(new CustomEvent('__cliplingua_set_ck_text', {
-        detail: { selector, text: newText, requestId }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("__cliplingua_set_ck_text", {
+          detail: { selector, text: newText, requestId },
+        })
+      );
     });
-    
-    editable.removeAttribute('data-cliplingua-id');
-    
+
+    editable.removeAttribute("data-cliplingua-id");
+
     if (result.success) {
-      console.log('[ClipLingua] Bridge succeeded');
       return;
-    } else {
-      console.warn('[ClipLingua] Bridge failed:', result.error);
     }
   } catch (e) {
-    console.error('[ClipLingua] Bridge error:', e);
-    editable.removeAttribute('data-cliplingua-id');
+    editable.removeAttribute("data-cliplingua-id");
   }
-
-  console.warn('[ClipLingua] All CKEditor replacement methods failed');
 }

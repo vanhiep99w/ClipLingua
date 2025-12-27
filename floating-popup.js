@@ -15,7 +15,6 @@ window.addEventListener('message', async (event) => {
     const text = event.data.text;
     selectedTextForPopup = text;
     isInputContext = event.data.isInputContext || false;
-    console.log('[popup] Received SELECTION_DATA - text:', text, 'isInputContext:', isInputContext);
 
     if (!text) {
       showError('No text selected');
@@ -40,9 +39,6 @@ window.addEventListener('message', async (event) => {
 window.parent.postMessage({ type: 'POPUP_READY' }, '*');
 
 function displayResult(result) {
-  console.log('[popup] displayResult called with:', result);
-  console.log('[popup] isInputContext:', isInputContext);
-  
   document.getElementById('loading').style.display = 'none';
   document.getElementById('result').classList.add('show');
 
@@ -50,22 +46,18 @@ function displayResult(result) {
   const correctedSection = document.getElementById('corrected-section');
 
   if (result.language === 'en') {
-    console.log('[popup] English detected, showing corrected section');
     correctedSection.style.display = 'block';
     document.getElementById('corrected-text').textContent = result.corrected;
     document.getElementById('translated-title').innerHTML = '🌏 Vietnamese';
     document.getElementById('translated-text').textContent = result.translated;
     
     if (isInputContext && applyBtn) {
-      console.log('[popup] Showing Apply button');
       applyBtn.style.display = 'block';
       correctedSection.classList.add('has-apply-btn');
     } else {
-      console.log('[popup] Hiding Apply button - isInputContext:', isInputContext);
       correctedSection.classList.remove('has-apply-btn');
     }
   } else {
-    console.log('[popup] Vietnamese detected, hiding corrected section');
     correctedSection.style.display = 'none';
     document.getElementById('translated-title').innerHTML = '🌍 English';
     document.getElementById('translated-text').textContent = result.translated;
@@ -85,8 +77,6 @@ function displayResult(result) {
         const marginTop = parseFloat(cardStyle.marginTop);
         const marginBottom = parseFloat(cardStyle.marginBottom);
         
-        console.log(`[popup] Card ${index} (${card.id}): visible=${isVisible}, height=${cardHeight}, margins=${marginTop}+${marginBottom}`);
-        
         if (isVisible) {
           contentHeight += cardHeight + marginTop + marginBottom;
         }
@@ -94,8 +84,6 @@ function displayResult(result) {
       
       const headerHeight = header ? header.offsetHeight : 0;
       const totalHeight = headerHeight + contentHeight;
-      
-      console.log('[popup] Final - header:', headerHeight, 'contentHeight:', contentHeight, 'total:', totalHeight);
       
       window.parent.postMessage({ 
         type: 'SET_HEIGHT', 
@@ -213,7 +201,6 @@ Return ONLY a JSON object with this format:
   if (!content) throw new Error('No response from API');
 
   const result = JSON.parse(content);
-  console.log('[translateText] AI response:', result);
   
   return {
     language: result.language || 'vi',

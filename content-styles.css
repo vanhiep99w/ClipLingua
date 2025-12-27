@@ -1,0 +1,101 @@
+/* Content Script Styles - Only for injected UI elements */
+
+/* Status Indicator Dot */
+.cliplingua-status-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  z-index: 999999;
+  pointer-events: none;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+@keyframes cliplingua-pulse-dot {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes cliplingua-success-pop {
+  0% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.4);
+  }
+  100% { 
+    transform: scale(1);
+  }
+}
+
+@keyframes cliplingua-error-shake {
+  0%, 100% { 
+    transform: translateX(0) scale(1);
+  }
+  25% { 
+    transform: translateX(-3px) scale(1.2);
+  }
+  75% { 
+    transform: translateX(3px) scale(1.2);
+  }
+}
+
+.cliplingua-status-dot[data-status="processing"] {
+  background: #667eea;
+  animation: cliplingua-pulse-dot 1s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.cliplingua-status-dot[data-status="success"] {
+  background: #4caf50;
+  animation: cliplingua-success-pop 0.4s ease-out;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.cliplingua-status-dot[data-status="error"] {
+  background: #d32f2f;
+  animation: cliplingua-error-shake 0.5s ease-out;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2);
+}
+
+/* Inline Apply Button */
+.cliplingua-inline-apply-btn {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2147483646;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.1s;
+  pointer-events: none;
+}
+
+.cliplingua-inline-apply-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cliplingua-inline-apply-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+}
+
+.cliplingua-inline-apply-btn:active {
+  transform: scale(0.95);
+}

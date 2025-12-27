@@ -3,10 +3,7 @@ importScripts("storage.js", "utils.js", "messages.js", "groq-client.js");
 let selectedText = "";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[Background] Received message:', message.type);
-  
   if (!isValidMessage(message)) {
-    console.log('[Background] Invalid message');
     return false;
   }
 
@@ -22,7 +19,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === MESSAGE_TYPES.CHECK_GRAMMAR) {
-    console.log('[Background] Handling CHECK_GRAMMAR');
     handleGrammarCheck(message.text, sendResponse);
     return true;
   }
@@ -31,18 +27,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleGrammarCheck(text, sendResponse) {
-  console.log('[Background] handleGrammarCheck called with text:', text);
   try {
     const apiKey = await getSetting('groqApiKey');
     const selectedModel = await getSetting('selectedModel') || DEFAULT_MODEL;
     
     if (!apiKey) {
-      console.log('[Background] No API key');
       sendResponse({ success: false, error: 'API key not configured' });
       return;
     }
 
-    console.log('[Background] Calling Groq API...');
     const response = await fetch(GROQ_API_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -75,20 +68,16 @@ async function handleGrammarCheck(text, sendResponse) {
     }
 
     const data = await response.json();
-    console.log('[Background] API response received');
     
     if (data.choices && data.choices[0]) {
       const result = { 
         success: true, 
         result: data.choices[0].message.content.trim() 
       };
-      console.log('[Background] Sending success response');
       sendResponse(result);
     } else if (data.error) {
-      console.log('[Background] API error:', data.error);
       sendResponse({ success: false, error: data.error.message || 'API error' });
     } else {
-      console.log('[Background] Invalid API response structure');
       sendResponse({ success: false, error: 'Invalid response' });
     }
   } catch (error) {

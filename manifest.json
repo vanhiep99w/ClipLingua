@@ -29,6 +29,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["messages.js", "content.js"],
+      "css": ["content-styles.css"],
       "run_at": "document_idle"
     }
   ],
