@@ -9,12 +9,11 @@ chrome.runtime.sendMessage({ type: 'GET_SELECTION' }, async (response) => {
   }
 
   const text = response.text;
-  document.getElementById('original-text').textContent = text;
 
   try {
     const apiKey = await getSetting('groqApiKey');
     if (!apiKey) {
-      showError('API key not configured. Please go to Settings.');
+      showError('API key not configured.\nGo to Settings to add your key.');
       return;
     }
 
@@ -36,39 +35,43 @@ function displayResult(result) {
   document.getElementById('result').classList.add('show');
 
   if (result.language === 'en') {
-    document.getElementById('corrected-section').style.display = 'block';
+    const correctedSection = document.getElementById('corrected-section');
+    correctedSection.style.display = 'block';
     document.getElementById('corrected-text').textContent = result.corrected;
-    document.getElementById('translated-title').textContent = '🇻🇳 Vietnamese';
+    document.getElementById('translated-title').innerHTML = '🌏 Vietnamese';
     document.getElementById('translated-text').textContent = result.translated;
   } else {
     document.getElementById('corrected-section').style.display = 'none';
-    document.getElementById('translated-title').textContent = '🇬🇧 English';
+    document.getElementById('translated-title').innerHTML = '🌍 English';
     document.getElementById('translated-text').textContent = result.translated;
   }
 }
 
 function showError(message) {
   document.getElementById('loading').style.display = 'none';
-  document.getElementById('error').textContent = message;
-  document.getElementById('error').style.display = 'block';
+  const errorEl = document.getElementById('error');
+  errorEl.querySelector('.error-text').textContent = message;
+  errorEl.style.display = 'block';
 }
 
-document.getElementById('copy-corrected').addEventListener('click', async () => {
-  const text = document.getElementById('corrected-text').textContent;
-  await navigator.clipboard.writeText(text);
-  document.getElementById('copy-corrected').textContent = 'Copied ✓';
+function copyToClipboard(btn, text) {
+  navigator.clipboard.writeText(text);
+  btn.textContent = 'Copied ✓';
+  btn.classList.add('copied');
   setTimeout(() => {
-    document.getElementById('copy-corrected').textContent = 'Copy';
-  }, 2000);
+    btn.textContent = 'Copy';
+    btn.classList.remove('copied');
+  }, 1500);
+}
+
+document.getElementById('copy-corrected').addEventListener('click', function() {
+  const text = document.getElementById('corrected-text').textContent;
+  copyToClipboard(this, text);
 });
 
-document.getElementById('copy-translated').addEventListener('click', async () => {
+document.getElementById('copy-translated').addEventListener('click', function() {
   const text = document.getElementById('translated-text').textContent;
-  await navigator.clipboard.writeText(text);
-  document.getElementById('copy-translated').textContent = 'Copied ✓';
-  setTimeout(() => {
-    document.getElementById('copy-translated').textContent = 'Copy';
-  }, 2000);
+  copyToClipboard(this, text);
 });
 
 async function getSetting(key) {
