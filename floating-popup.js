@@ -55,14 +55,38 @@ function showError(message) {
 }
 
 function copyToClipboard(btn, text) {
-  navigator.clipboard.writeText(text);
-  const originalText = btn.textContent;
-  btn.textContent = '✓';
-  btn.classList.add('copied');
-  setTimeout(() => {
-    btn.textContent = originalText;
-    btn.classList.remove('copied');
-  }, 1200);
+  try {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '⎘';
+        btn.classList.remove('copied');
+      }, 1500);
+    }).catch(err => {
+      console.error('Copy failed:', err);
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        btn.textContent = '✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = '⎘';
+          btn.classList.remove('copied');
+        }, 1500);
+      } catch (e) {
+        console.error('Fallback copy failed:', e);
+      }
+      document.body.removeChild(textArea);
+    });
+  } catch (error) {
+    console.error('Copy error:', error);
+  }
 }
 
 document.getElementById('copy-corrected').addEventListener('click', function() {
