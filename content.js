@@ -1,11 +1,3 @@
-const script = document.createElement('script');
-script.src = chrome.runtime.getURL('storage.js');
-document.documentElement.appendChild(script);
-
-const messagesScript = document.createElement('script');
-messagesScript.src = chrome.runtime.getURL('messages.js');
-document.documentElement.appendChild(messagesScript);
-
 let customHotkey = null;
 
 async function loadHotkey() {
@@ -40,10 +32,11 @@ document.addEventListener("keydown", async (e) => {
     const selectedText = window.getSelection().toString().trim();
     
     if (selectedText) {
-      chrome.runtime.sendMessage(
-        createMessage(MESSAGE_TYPES.OPEN_POPUP, { text: selectedText }),
-        () => {}
-      );
+      chrome.runtime.sendMessage({
+        type: "OPEN_POPUP",
+        payload: { text: selectedText },
+        timestamp: Date.now()
+      });
     }
   }
 });
