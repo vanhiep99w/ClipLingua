@@ -10,12 +10,6 @@ async function loadCurrentSettings() {
   currentHotkey = settings.customHotkey || STORAGE_DEFAULTS.customHotkey;
   updateHotkeyDisplay();
   updateHotkeyCheckboxes();
-  
-  document.getElementById("auto-copy").checked = settings.preferences?.autoCopy || false;
-  document.getElementById("show-notification").checked = settings.preferences?.showNotification !== false;
-  document.getElementById("keep-popup-open").checked = settings.preferences?.keepPopupOpen || false;
-  document.getElementById("save-history").checked = settings.preferences?.saveHistory !== false;
-  document.getElementById("theme-select").value = settings.preferences?.theme || "light";
 }
 
 function updateHotkeyDisplay() {
@@ -40,19 +34,25 @@ function updateHotkeyCheckboxes() {
 function validateSettings() {
   let isValid = true;
   
-  document.getElementById("api-key-error").classList.add("hidden");
-  document.getElementById("hotkey-error").classList.add("hidden");
+  const apiKeyError = document.getElementById("api-key-error");
+  const hotkeyError = document.getElementById("hotkey-error");
+  const apiKeyInput = document.getElementById("api-key");
   
-  const apiKey = document.getElementById("api-key").value.trim();
+  apiKeyError.classList.remove("visible");
+  hotkeyError.classList.remove("visible");
+  apiKeyInput.classList.remove("invalid");
+  
+  const apiKey = apiKeyInput.value.trim();
   if (!apiKey) {
-    document.getElementById("api-key-error").textContent = "API key is required";
-    document.getElementById("api-key-error").classList.remove("hidden");
+    apiKeyError.textContent = "API key is required";
+    apiKeyError.classList.add("visible");
+    apiKeyInput.classList.add("invalid");
     isValid = false;
   }
   
   if (!currentHotkey.key) {
-    document.getElementById("hotkey-error").textContent = "Please configure a hotkey";
-    document.getElementById("hotkey-error").classList.remove("hidden");
+    hotkeyError.textContent = "Please configure a hotkey";
+    hotkeyError.classList.add("visible");
     isValid = false;
   }
   
@@ -67,37 +67,26 @@ async function saveCurrentSettings() {
   const settings = {
     groqApiKey: document.getElementById("api-key").value.trim(),
     selectedModel: document.getElementById("model-select").value,
-    customHotkey: currentHotkey,
-    preferences: {
-      autoCopy: document.getElementById("auto-copy").checked,
-      showNotification: document.getElementById("show-notification").checked,
-      keepPopupOpen: document.getElementById("keep-popup-open").checked,
-      saveHistory: document.getElementById("save-history").checked,
-      theme: document.getElementById("theme-select").value
-    }
+    customHotkey: currentHotkey
   };
   
   await saveSettings(settings);
   
-  showStatus("Settings saved successfully! ✅", "success");
+  showStatus("Settings saved successfully!", "success");
 }
 
 function showStatus(message, type) {
   const statusEl = document.getElementById("save-status");
   statusEl.textContent = message;
-  statusEl.className = `status-message ${type}`;
-  statusEl.classList.remove("hidden");
+  statusEl.className = `status ${type} visible`;
   
   setTimeout(() => {
-    statusEl.classList.add("hidden");
+    statusEl.classList.remove("visible");
   }, 3000);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadCurrentSettings();
-  
-  const theme = await getSetting("preferences.theme") || "light";
-  document.body.classList.toggle("dark", theme === "dark");
   
   document.getElementById("save-btn").addEventListener("click", saveCurrentSettings);
   

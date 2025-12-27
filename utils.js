@@ -1,45 +1,65 @@
 async function sendMessageToBackground(message) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(message, (response) => {
-      resolve(response);
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(response);
+      }
     });
   });
 }
 
 async function sendMessageToTab(tabId, message) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.tabs.sendMessage(tabId, message, (response) => {
-      resolve(response);
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(response);
+      }
     });
   });
 }
 
 async function getActiveTab() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      resolve(tabs[0]);
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(tabs[0]);
+      }
     });
   });
 }
 
 async function executeScriptInTab(tabId, func) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.scripting.executeScript(
       {
         target: { tabId },
         func
       },
       (results) => {
-        resolve(results?.[0]?.result);
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(results?.[0]?.result);
+        }
       }
     );
   });
 }
 
 async function openTab(url) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.tabs.create({ url }, (tab) => {
-      resolve(tab);
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(tab);
+      }
     });
   });
 }
@@ -55,7 +75,7 @@ async function copyToClipboard(text) {
 }
 
 async function showNotification(title, message, options = {}) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     chrome.notifications.create(
       {
         type: "basic",
@@ -65,7 +85,11 @@ async function showNotification(title, message, options = {}) {
         ...options
       },
       (notificationId) => {
-        resolve(notificationId);
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve(notificationId);
+        }
       }
     );
   });

@@ -408,3 +408,38 @@ body.dark .btn-secondary {
 body.dark .btn-secondary:hover {
   background: #4a4a4a;
 }
+
+.cliplingua-inline-apply-btn {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2147483646;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.1s;
+  pointer-events: none;
+}
+
+.cliplingua-inline-apply-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cliplingua-inline-apply-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+}
+
+.cliplingua-inline-apply-btn:active {
+  transform: scale(0.95);
+}

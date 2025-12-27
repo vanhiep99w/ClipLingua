@@ -171,6 +171,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     openTab("settings.html");
   });
 
-  const theme = await getSetting("preferences.theme") || "light";
+  const prefs = await getSetting("preferences") || STORAGE_DEFAULTS.preferences;
+  const theme = prefs.theme || "light";
   document.body.classList.toggle("dark", theme === "dark");
 });
