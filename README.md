@@ -25,22 +25,35 @@ Visit [Groq Console](https://console.groq.com/keys) and create a free API key.
 
 ## 📖 Usage
 
-1. Select any text on a webpage
+### Quick Apply (Double Shift)
+1. Click into any input field or textarea
+2. Type your text
+3. Press **Shift twice** quickly (within 300ms)
+4. Text is automatically grammar-checked and corrected in place
+
+### Detailed Translation (Custom Hotkey)
+1. Select any text on a webpage or in an input field
 2. Press your configured hotkey (default: `Ctrl+Shift+T`)
-3. The popup will show:
+3. A floating popup will show:
    - **English text**: Grammar correction + Vietnamese translation
    - **Vietnamese text**: English translation
-4. Click the **Copy** button to copy results to clipboard
+4. Use the popup buttons to:
+   - **Copy**: Copy translation to clipboard
+   - **Apply**: Replace text in input field (if applicable)
 
 ## ⚙️ Features
 
+- ✅ **Double Shift Quick Apply**: Instant grammar check in input fields
 - ✅ Auto language detection (English/Vietnamese)
 - ✅ Grammar & typo correction for English
-- ✅ Natural translation using Groq AI
+- ✅ Natural, fluent translation using Groq AI
+- ✅ Preserves UPPERCASE_CONSTANTS and acronyms (PSP, API, etc.)
+- ✅ Improves awkward sentence structures
 - ✅ Custom keyboard shortcuts
-- ✅ Translation history (optional)
-- ✅ Light/Dark theme support
+- ✅ Works with React, Vue, Lexical, and CKEditor inputs
+- ✅ Floating popup with detailed results
 - ✅ Copy to clipboard
+- ✅ Apply directly to input fields
 
 ## 🛠️ Development
 
@@ -49,13 +62,15 @@ Visit [Groq Console](https://console.groq.com/keys) and create a free API key.
 ClipLingua/
 ├── manifest.json         # Extension manifest
 ├── background.js         # Service worker
-├── content.js           # Content script
-├── popup.html/js        # Popup UI
+├── content.js           # Content script (double-shift, floating popup)
+├── popup.html/js        # Extension popup
+├── floating-popup.html/js # Floating translation popup
 ├── settings.html/js     # Settings page
 ├── storage.js           # Storage helpers
 ├── utils.js             # Utility functions
-├── groq-client.js       # Groq API client
+├── groq-client.js       # Groq API client with optimized prompts
 ├── messages.js          # Message contracts
+├── ckeditor-bridge.js   # CKEditor integration
 └── styles.css           # Shared styles
 ```
 
@@ -87,3 +102,8 @@ MIT License
 **Hotkey doesn't work:**
 - Configure it in Settings
 - Or use `chrome://extensions/shortcuts` to set Chrome's built-in shortcut
+
+**Double Shift doesn't trigger:**
+- Make sure you're focused in an input field
+- Press Shift twice within 300ms
+- Try reloading the extension if context is invalidated
