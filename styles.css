@@ -1,0 +1,410 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  background: #f5f5f5;
+}
+
+.popup-container {
+  width: 400px;
+  max-height: 600px;
+  background: white;
+  overflow-y: auto;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.popup-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.popup-content {
+  padding: 16px;
+}
+
+.state {
+  display: block;
+}
+
+.state.hidden {
+  display: none;
+}
+
+.welcome {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.welcome .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.welcome h2 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.welcome p {
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.welcome ol {
+  text-align: left;
+  max-width: 300px;
+  margin: 16px auto;
+  color: #666;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 12px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.selected-text-section {
+  margin-bottom: 16px;
+}
+
+.selected-text-section h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.text-box {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  min-height: 60px;
+  max-height: 150px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border: 3px solid #f0f0f0;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.result-section {
+  margin-bottom: 16px;
+}
+
+.result-section h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.error {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.error .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #d32f2f;
+}
+
+.error p {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; }
+  10%, 90% { opacity: 1; }
+}
+
+.settings-container {
+  width: 600px;
+  min-height: 100vh;
+  background: white;
+  margin: 0 auto;
+}
+
+.settings-header {
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.settings-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.settings-content {
+  padding: 24px;
+}
+
+.settings-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #555;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  color: #999;
+  font-size: 12px;
+}
+
+.form-group small a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.form-group small a:hover {
+  text-decoration: underline;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.hotkey-display {
+  margin: 8px 0;
+}
+
+.hotkey-display kbd {
+  font-size: 14px;
+  padding: 8px 12px;
+}
+
+.hotkey-config {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.hotkey-config label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.error-message {
+  display: block;
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.error-message.hidden {
+  display: none;
+}
+
+.status-message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.status-message.hidden {
+  display: none;
+}
+
+.status-message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.status-message.error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+body.dark {
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+body.dark .popup-container,
+body.dark .settings-container {
+  background: #2a2a2a;
+}
+
+body.dark .text-box {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+body.dark .btn-secondary {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+body.dark .btn-secondary:hover {
+  background: #4a4a4a;
+}

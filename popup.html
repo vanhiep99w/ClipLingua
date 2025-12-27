@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipLingua</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <h1>ClipLingua</h1>
+      <button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+    </header>
+
+    <main class="popup-content">
+      <div id="initial-state" class="state">
+        <div class="welcome">
+          <div class="icon">👋</div>
+          <h2>Welcome!</h2>
+          <p>Select text and press <kbd>Ctrl+Shift+T</kbd> to translate or fix errors</p>
+        </div>
+      </div>
+
+      <div id="no-api-key-state" class="state hidden">
+        <div class="welcome">
+          <div class="icon">👋</div>
+          <h2>Welcome to ClipLingua!</h2>
+          <p>To get started:</p>
+          <ol>
+            <li>Get a free Groq API key</li>
+            <li>Configure your settings</li>
+          </ol>
+          <button id="go-to-settings-btn" class="btn btn-primary">🚀 Go to Settings</button>
+        </div>
+      </div>
+
+      <div id="loading-state" class="state hidden">
+        <div class="selected-text-section">
+          <h3>📝 Selected Text</h3>
+          <div id="selected-text-display" class="text-box"></div>
+        </div>
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>⏳ Processing with Groq AI...</p>
+        </div>
+      </div>
+
+      <div id="result-state" class="state hidden">
+        <div class="selected-text-section">
+          <h3>📝 Original</h3>
+          <div id="original-text-display" class="text-box"></div>
+        </div>
+
+        <div id="corrected-section" class="result-section hidden">
+          <h3>✅ Corrected English</h3>
+          <div id="corrected-text" class="text-box"></div>
+          <button id="copy-corrected-btn" class="btn btn-secondary">📋 Copy</button>
+        </div>
+
+        <div id="translated-section" class="result-section">
+          <h3 id="translated-title">🇻🇳 Vietnamese</h3>
+          <div id="translated-text" class="text-box"></div>
+          <button id="copy-translated-btn" class="btn btn-secondary">📋 Copy</button>
+        </div>
+      </div>
+
+      <div id="error-state" class="state hidden">
+        <div class="error">
+          <div class="icon">❌</div>
+          <h3>Error</h3>
+          <p id="error-message">Something went wrong</p>
+          <div class="error-actions">
+            <button id="retry-btn" class="btn btn-secondary">🔄 Retry</button>
+            <button id="open-settings-btn" class="btn btn-secondary">⚙️ Open Settings</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="utils.js"></script>
+  <script src="messages.js"></script>
+  <script src="groq-client.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

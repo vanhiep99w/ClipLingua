@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipLingua Settings</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="settings-container">
+    <header class="settings-header">
+      <h1>⚙️ ClipLingua Settings</h1>
+    </header>
+
+    <main class="settings-content">
+      <section class="settings-section">
+        <h2>🔑 API Configuration</h2>
+        
+        <div class="form-group">
+          <label for="api-key">Groq API Key *</label>
+          <input 
+            type="password" 
+            id="api-key" 
+            placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx"
+            autocomplete="off"
+          >
+          <small>Get your free API key from <a href="https://console.groq.com/keys" target="_blank">Groq Console</a></small>
+          <span id="api-key-error" class="error-message hidden"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="model-select">Model</label>
+          <select id="model-select">
+            <option value="llama-3.1-8b-instant">Fast (llama-3.1-8b-instant)</option>
+            <option value="llama-3.3-70b-versatile" selected>Balanced (llama-3.3-70b-versatile)</option>
+            <option value="mixtral-8x7b-32768">Long Context (mixtral-8x7b-32768)</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>⌨️ Keyboard Shortcut</h2>
+        
+        <div class="form-group">
+          <label>Current Shortcut</label>
+          <div class="hotkey-display">
+            <kbd id="current-hotkey">Ctrl+Shift+T</kbd>
+          </div>
+          <small>You can also customize shortcuts in <a href="chrome://extensions/shortcuts" target="_blank">chrome://extensions/shortcuts</a></small>
+        </div>
+
+        <div class="form-group">
+          <label for="hotkey-input">Custom Hotkey</label>
+          <input 
+            type="text" 
+            id="hotkey-input" 
+            placeholder="Press your desired key combination..."
+            readonly
+          >
+          <div class="hotkey-config">
+            <label><input type="checkbox" id="hotkey-ctrl"> Ctrl</label>
+            <label><input type="checkbox" id="hotkey-shift"> Shift</label>
+            <label><input type="checkbox" id="hotkey-alt"> Alt</label>
+            <label><input type="checkbox" id="hotkey-meta"> Meta (⌘/Win)</label>
+          </div>
+          <span id="hotkey-error" class="error-message hidden"></span>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>🎨 Preferences</h2>
+        
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="auto-copy">
+            Auto-copy translation result
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="show-notification">
+            Show notifications
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="keep-popup-open">
+            Keep popup open after copying
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="save-history">
+            Save translation history
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="theme-select">Theme</label>
+          <select id="theme-select">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="settings-actions">
+        <button id="save-btn" class="btn btn-primary">💾 Save Settings</button>
+        <button id="reset-btn" class="btn btn-secondary">🔄 Reset to Defaults</button>
+      </div>
+
+      <div id="save-status" class="status-message hidden"></div>
+    </main>
+  </div>
+
+  <script src="storage.js"></script>
+  <script src="utils.js"></script>
+  <script src="groq-client.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

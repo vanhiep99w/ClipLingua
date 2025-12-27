@@ -1,40 +1,28 @@
-# AGENTS.md - ClipLingua
+# ClipLingua - Chrome Extension Translation Tool
 
-## Project Status
+## Build/Test Commands
 
-This is a **design specification** for ClipLingua (AI translator for Ubuntu). Implementation has not started yet.
+- No build commands yet (vanilla JavaScript project)
+- Load extension: Chrome → Extensions → Developer mode → Load unpacked → Select project folder
+- Test: Manual testing in Chrome after loading extension
 
-## Architecture Overview
+## Architecture
 
-- **Language**: Python 3.10+
-- **UI**: GTK 3 (PyGObject)
-- **AI Provider**: Groq API (llama-3.1-8b-instant)
-- **Service**: systemd --user daemon
-- See document.md for full architecture details
+- **Chrome Extension Manifest V3** structure with vanilla JavaScript
+- **Files**: manifest.json, background.js (service worker), content.js (text capture), popup.html/js (UI), settings.html/js (config)
+- **API**: Groq API (llama-3.3-70b-versatile) for translation and grammar correction
+- **Storage**: chrome.storage.sync for settings (API key, hotkey config, preferences)
+- **Hotkey**: Chrome Commands API for custom keyboard shortcuts
 
-## Commands (When Implemented)
+## Code Style
 
-```bash
-# Run daemon
-cliplingua-daemon
+- Use vanilla JavaScript (no frameworks)
+- Async/await for API calls and Chrome APIs
+- Promisify Chrome storage operations with `new Promise((resolve) => chrome.storage.sync.get(...))`
+- API config: temperature 0.3, max_tokens 2000, top_p 0.9
+- Error handling: try/catch for API calls, show user-friendly error states in popup
+- Do not add code comments unless complex logic requires explanation
 
-# Install dependencies
-pip install groq pynput PyGObject toml keyring requests
-
-# Run tests (when implemented)
-pytest tests/
-```
-
-## Code Style Guidelines
-
-- Use **dataclasses** for config objects
-- **Type hints** required for all functions
-- **Error handling**: Classify errors (network/API/validation)
-- **Async operations**: Use threading.Thread for API calls, GLib.idle_add for UI updates
-- **Security**: Never log API keys, use keyring/env vars
-- **Imports**: Standard lib → third-party → local (grouped with blank lines)
-- **Naming**: snake_case for functions/variables, PascalCase for classes
-- **Max line length**: Follow PEP 8 conventions
 
 ## Issue Tracking with bd (beads)
 
@@ -101,19 +89,6 @@ bd close bd-42 --reason "Completed" --json
    - `bd create "Found bug" -p 1 --deps discovered-from:<parent-id>`
 5. **Complete**: `bd close <id> --reason "Done"`
 6. **Commit together**: Always commit the `.beads/issues.jsonl` file together with the code changes so issue state stays in sync with code state
-
-### Auto-Sync
-
-bd automatically syncs with git:
-
-- Exports to `.beads/issues.jsonl` after changes (5s debounce)
-- Imports from JSONL when newer (e.g., after `git pull`)
-- No manual export/import needed!
-
-### GitHub Copilot Integration
-
-If using GitHub Copilot, also create `.github/copilot-instructions.md` for automatic instruction loading.
-Run `bd onboard` to get the content, or see step 2 of the onboard instructions.
 
 ### MCP Server (Recommended)
 
@@ -185,5 +160,3 @@ For example: `bd create --help` shows `--parent`, `--deps`, `--assignee`, etc.
 - ❌ Do NOT use external issue trackers
 - ❌ Do NOT duplicate tracking systems
 - ❌ Do NOT clutter repo root with planning documents
-
-For more details, see README.md and QUICKSTART.md.
