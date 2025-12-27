@@ -4,6 +4,17 @@ if (!chrome.runtime?.id) {
   window.location.reload();
 }
 
+// Inject page-context bridge for CKEditor access
+(function injectBridge() {
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL('ckeditor-bridge.js');
+  script.onload = function() {
+    this.remove();
+    console.log('[ClipLingua] CKEditor bridge injected');
+  };
+  (document.head || document.documentElement).appendChild(script);
+})();
+
 let customHotkey = null;
 let floatingPopup = null;
 let activeInputField = null;
@@ -332,6 +343,169 @@ function removeInlineButton() {
   inlineApplyButton = null;
 }
 
+function isLexicalEditorElement(el) {
+  return (
+    el.closest('[data-lexical-editor="true"]') ||
+    el.hasAttribute('data-lexical-editor')
+  );
+}
+
+function isCKEditorElement(el) {
+  // Teams: data-tid + CKEditor classes
+  if (!el) return false;
+  const hasTeamsTid = el.getAttribute('data-tid') === 'ckeditor';
+  const hasCKEditorClasses = el.classList.contains('ck') &&
+    el.classList.contains('ck-content') &&
+    el.classList.contains('ck-editor__editable');
+  return hasTeamsTid || hasCKEditorClasses;
+}
+
+async function replaceLexicalEditorText(editableEl, newText) {
+  editableEl.focus();
+
+  const isMac = navigator.platform.toUpperCase().includes('MAC');
+  const selectAllEventInit = {
+    bubbles: true,
+    cancelable: true,
+    key: 'a',
+    code: 'KeyA',
+    [isMac ? 'metaKey' : 'ctrlKey']: true,
+  };
+
+  // Let Lexical handle "Select All"
+  editableEl.dispatchEvent(new KeyboardEvent('keydown', selectAllEventInit));
+  editableEl.dispatchEvent(new KeyboardEvent('keyup', selectAllEventInit));
+
+  // Give Lexical a tick to update its selection
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  // Let Lexical handle delete of current selection
+  const backspaceInit = {
+    bubbles: true,
+    cancelable: true,
+    key: 'Backspace',
+    code: 'Backspace',
+  };
+  editableEl.dispatchEvent(new KeyboardEvent('keydown', backspaceInit));
+  editableEl.dispatchEvent(new KeyboardEvent('keyup', backspaceInit));
+
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+
+  // Insert replacement text - ONLY use beforeinput, not input
+  const beforeInput = new InputEvent('beforeinput', {
+    bubbles: true,
+    cancelable: true,
+    inputType: 'insertText',
+    data: newText,
+  });
+  editableEl.dispatchEvent(beforeInput);
+  
+  // Do NOT dispatch a second 'input' event - Lexical will insert twice!
+}
+
+async function replaceCKEditorText(rootElement, newText) {
+  // 1. Find the actual editable element CKEditor uses
+  const editable =
+    rootElement.matches('[contenteditable="true"]')
+      ? rootElement
+      : rootElement.querySelector('[contenteditable="true"]');
+
+  if (!editable) {
+    console.warn('[ClipLingua] CKEditor editable element not found');
+    return;
+  }
+
+  // 2. Focus and select all content
+  editable.focus();
+
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(editable);
+  sel.removeAllRanges();
+  sel.addRange(range);
+
+  // 3. Try execCommand approach (may trigger trusted beforeinput/input)
+  try {
+    const oldText = editable.textContent.trim();
+    
+    // Clear content using execCommand so CKEditor sees it
+    document.execCommand('delete', false, null);
+
+    // Insert the new text via execCommand
+    const success = document.execCommand('insertText', false, newText);
+    
+    console.log('[ClipLingua] execCommand insertText result:', success);
+
+    // Trigger change events
+    editable.dispatchEvent(new Event('input', { bubbles: true }));
+    editable.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    // Wait a moment and verify text actually changed
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const currentText = editable.textContent.trim();
+    if (currentText === newText) {
+      console.log('[ClipLingua] execCommand succeeded');
+      return;
+    }
+    
+    console.warn('[ClipLingua] execCommand returned true but text unchanged:', currentText);
+  } catch (e) {
+    console.warn('[ClipLingua] execCommand failed:', e);
+  }
+
+  // 4. Fallback: try page-context bridge
+  console.log('[ClipLingua] Trying page-context bridge');
+  const bridgeId = 'cliplingua-' + Date.now();
+  editable.setAttribute('data-cliplingua-id', bridgeId);
+  const selector = `[data-cliplingua-id="${bridgeId}"]`;
+  
+  try {
+    const requestId = 'req-' + Date.now() + '-' + Math.random();
+    
+    // Wait for response from page context
+    const result = await new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        cleanup();
+        resolve({ success: false, error: 'Timeout' });
+      }, 2000);
+      
+      const cleanup = () => {
+        clearTimeout(timeout);
+        window.removeEventListener('__cliplingua_set_ck_text_response', handler);
+      };
+      
+      const handler = (event) => {
+        if (event.detail.requestId === requestId) {
+          cleanup();
+          resolve(event.detail);
+        }
+      };
+      
+      window.addEventListener('__cliplingua_set_ck_text_response', handler);
+      
+      // Send request to page context
+      window.dispatchEvent(new CustomEvent('__cliplingua_set_ck_text', {
+        detail: { selector, text: newText, requestId }
+      }));
+    });
+    
+    editable.removeAttribute('data-cliplingua-id');
+    
+    if (result.success) {
+      console.log('[ClipLingua] Bridge succeeded');
+      return;
+    } else {
+      console.warn('[ClipLingua] Bridge failed:', result.error);
+    }
+  } catch (e) {
+    console.error('[ClipLingua] Bridge error:', e);
+    editable.removeAttribute('data-cliplingua-id');
+  }
+
+  console.warn('[ClipLingua] All CKEditor replacement methods failed');
+}
+
 function positionInlineButton(inputElement) {
   if (!inlineApplyButton) return;
   
@@ -405,58 +579,60 @@ function showInlineButton(inputElement) {
         
         console.log('[ClipLingua] Response:', response);
         
-        if (!inlineApplyButton) return;
-        
         if (response && response.success && response.result) {
           console.log('[ClipLingua] Applying result to input:', response.result);
           console.log('[ClipLingua] Input element:', inputElement);
           console.log('[ClipLingua] Is contentEditable:', inputElement.isContentEditable);
           
           if (inputElement.isContentEditable) {
-            // Special handling for Lexical editor (Facebook, etc.)
-            if (inputElement.dataset && inputElement.dataset.lexicalEditor === 'true') {
-              inputElement.focus();
-              
-              // Select all content
-              const selection = window.getSelection();
-              const range = document.createRange();
-              range.selectNodeContents(inputElement);
-              selection.removeAllRanges();
-              selection.addRange(range);
-              
-              // Use insertReplacementText to replace selected content
-              const beforeEvent = new InputEvent('beforeinput', {
-                bubbles: true,
-                cancelable: true,
-                inputType: 'insertReplacementText',
-                data: response.result
-              });
-              inputElement.dispatchEvent(beforeEvent);
-              
-              if (!beforeEvent.defaultPrevented) {
-                const inputEvent = new InputEvent('input', {
-                  bubbles: true,
-                  inputType: 'insertReplacementText',
-                  data: response.result
-                });
-                inputElement.dispatchEvent(inputEvent);
+            console.log('[ClipLingua] ContentEditable detected');
+
+            const isLexical = isLexicalEditorElement(inputElement);
+            const isCk = isCKEditorElement(inputElement);
+
+            try {
+              if (isLexical) {
+                console.log('[ClipLingua] Lexical editor detected, using Lexical-safe replacement');
+                await replaceLexicalEditorText(inputElement, response.result);
+              } else if (isCk) {
+                console.log('[ClipLingua] CKEditor detected, using CKEditor-safe replacement');
+                await replaceCKEditorText(inputElement, response.result);
+              } else {
+                console.log('[ClipLingua] Generic contentEditable, using simple replacement');
+                inputElement.textContent = response.result;
+                inputElement.dispatchEvent(
+                  new InputEvent('input', { bubbles: true, inputType: 'insertText' })
+                );
               }
-            } else {
-              // Regular contenteditable
-              inputElement.textContent = response.result;
-              inputElement.dispatchEvent(new InputEvent('input', { bubbles: true }));
+
+              console.log('[ClipLingua] Text replacement complete');
+            } catch (error) {
+              console.error('[ClipLingua] Error during text replacement:', error);
             }
           } else {
             console.log('[ClipLingua] Setting value to:', response.result);
             inputElement.value = response.result;
             console.log('[ClipLingua] Value after set:', inputElement.value);
+            
+            // Trigger React/Vue onChange by setting native value setter
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
+            
+            if (inputElement.tagName === 'INPUT') {
+              nativeInputValueSetter.call(inputElement, response.result);
+            } else if (inputElement.tagName === 'TEXTAREA') {
+              nativeTextAreaValueSetter.call(inputElement, response.result);
+            }
+            
             inputElement.dispatchEvent(new Event('input', { bubbles: true }));
             inputElement.dispatchEvent(new Event('change', { bubbles: true }));
           }
-          applyBtn.innerHTML = '<span class="cliplingua-inline-btn-icon">✓</span>';
-          setTimeout(() => {
-            removeInlineButton();
-          }, 800);
+          if (inlineApplyButton) {
+            applyBtn.innerHTML = '<span class="cliplingua-inline-btn-icon">✓</span>';
+            setTimeout(() => {
+              removeInlineButton();
+            }, 800);
+          }
         } else {
           console.error('[ClipLingua] Check failed:', response ? response.error : 'No response');
           applyBtn.innerHTML = '<span class="cliplingua-inline-btn-icon">✗</span>';

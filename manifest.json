@@ -34,7 +34,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["floating-popup.html", "floating-popup.js", "groq-client.js"],
+      "resources": ["floating-popup.html", "floating-popup.js", "groq-client.js", "ckeditor-bridge.js"],
       "matches": ["<all_urls>"]
     }
   ],
