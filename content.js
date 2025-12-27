@@ -35,11 +35,10 @@ function createFloatingPopup(x, y) {
     z-index: 2147483647;
     border: none;
     width: 380px;
-    height: 100px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     border-radius: 8px;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, height 0.2s ease;
   `;
 
   const viewportWidth = window.innerWidth;
@@ -70,7 +69,8 @@ function createFloatingPopup(x, y) {
       const body = iframeDoc.body;
       
       if (body && body.scrollHeight > 0) {
-        const height = Math.min(body.scrollHeight + 20, 600);
+        const contentHeight = body.scrollHeight;
+        const height = Math.min(contentHeight, 600);
         floatingPopup.style.height = height + 'px';
         
         if (top + height > viewportHeight) {
@@ -83,13 +83,13 @@ function createFloatingPopup(x, y) {
         setTimeout(adjustHeight, 50);
       }
     } catch (e) {
-      floatingPopup.style.height = '280px';
+      floatingPopup.style.height = 'auto';
       floatingPopup.style.opacity = '1';
     }
   };
 
   floatingPopup.addEventListener('load', () => {
-    setTimeout(adjustHeight, 100);
+    setTimeout(adjustHeight, 150);
     
     const observer = new MutationObserver(() => {
       adjustHeight();
