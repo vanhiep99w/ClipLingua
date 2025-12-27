@@ -31,12 +31,6 @@
       "run_at": "document_idle"
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["storage.js", "messages.js"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "commands": {
     "translate-selection": {
       "suggested_key": {
