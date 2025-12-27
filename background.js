@@ -13,6 +13,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
+  if (message.type === MESSAGE_TYPES.OPEN_POPUP) {
+    selectedText = message.payload.text;
+    return false;
+  }
+
   return false;
 });
 
@@ -27,7 +32,6 @@ chrome.commands.onCommand.addListener(async (command) => {
 
     if (result && result.length > 0) {
       selectedText = result;
-      chrome.action.openPopup();
     } else {
       await showNotification(
         "ClipLingua",

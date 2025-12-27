@@ -7,7 +7,7 @@ const STORAGE_DEFAULTS = {
     shift: true,
     alt: false,
     meta: false,
-    key: "T"
+    key: "A"
   },
   preferences: {
     autoCopy: false,

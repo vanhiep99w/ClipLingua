@@ -41,7 +41,8 @@ document.addEventListener("keydown", async (e) => {
     
     if (selectedText) {
       chrome.runtime.sendMessage(
-        createMessage(MESSAGE_TYPES.OPEN_POPUP, { text: selectedText })
+        createMessage(MESSAGE_TYPES.OPEN_POPUP, { text: selectedText }),
+        () => {}
       );
     }
   }
