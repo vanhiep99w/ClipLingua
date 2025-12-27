@@ -57,10 +57,8 @@ function showError(message) {
 function copyToClipboard(btn, text) {
   try {
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = '✓';
       btn.classList.add('copied');
       setTimeout(() => {
-        btn.textContent = '⎘';
         btn.classList.remove('copied');
       }, 1500);
     }).catch(err => {
@@ -73,10 +71,8 @@ function copyToClipboard(btn, text) {
       textArea.select();
       try {
         document.execCommand('copy');
-        btn.textContent = '✓';
         btn.classList.add('copied');
         setTimeout(() => {
-          btn.textContent = '⎘';
           btn.classList.remove('copied');
         }, 1500);
       } catch (e) {
