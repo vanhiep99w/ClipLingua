@@ -35,8 +35,11 @@ function createFloatingPopup(x, y) {
     z-index: 2147483647;
     border: none;
     width: 380px;
+    height: 100px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
   `;
 
   const viewportWidth = window.innerWidth;
@@ -61,21 +64,47 @@ function createFloatingPopup(x, y) {
 
   document.body.appendChild(floatingPopup);
 
-  floatingPopup.addEventListener('load', () => {
-    setTimeout(() => {
-      try {
-        const iframeDoc = floatingPopup.contentDocument || floatingPopup.contentWindow.document;
-        const height = iframeDoc.body.scrollHeight;
-        floatingPopup.style.height = Math.min(height + 10, 500) + 'px';
+  const adjustHeight = () => {
+    try {
+      const iframeDoc = floatingPopup.contentDocument || floatingPopup.contentWindow.document;
+      const body = iframeDoc.body;
+      
+      if (body && body.scrollHeight > 0) {
+        const height = Math.min(body.scrollHeight, 600);
+        floatingPopup.style.height = height + 'px';
         
         if (top + height > viewportHeight) {
           const newTop = Math.max(10, viewportHeight - height - 20);
           floatingPopup.style.top = newTop + 'px';
         }
-      } catch (e) {
-        floatingPopup.style.height = '300px';
+        
+        floatingPopup.style.opacity = '1';
+      } else {
+        setTimeout(adjustHeight, 50);
       }
-    }, 300);
+    } catch (e) {
+      floatingPopup.style.height = '250px';
+      floatingPopup.style.opacity = '1';
+    }
+  };
+
+  floatingPopup.addEventListener('load', () => {
+    setTimeout(adjustHeight, 100);
+    
+    const observer = new MutationObserver(() => {
+      adjustHeight();
+    });
+    
+    try {
+      const iframeDoc = floatingPopup.contentDocument || floatingPopup.contentWindow.document;
+      observer.observe(iframeDoc.body, {
+        childList: true,
+        subtree: true,
+        attributes: true
+      });
+    } catch (e) {
+      console.log('Could not observe iframe mutations');
+    }
   });
 }
 
