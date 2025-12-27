@@ -56,12 +56,13 @@ function showError(message) {
 
 function copyToClipboard(btn, text) {
   navigator.clipboard.writeText(text);
-  btn.textContent = 'Copied ✓';
+  const originalText = btn.textContent;
+  btn.textContent = '✓';
   btn.classList.add('copied');
   setTimeout(() => {
-    btn.textContent = 'Copy';
+    btn.textContent = originalText;
     btn.classList.remove('copied');
-  }, 1500);
+  }, 1200);
 }
 
 document.getElementById('copy-corrected').addEventListener('click', function() {

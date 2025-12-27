@@ -35,7 +35,6 @@ function createFloatingPopup(x, y) {
     z-index: 2147483647;
     border: none;
     width: 380px;
-    height: 400px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     border-radius: 8px;
   `;
@@ -53,9 +52,6 @@ function createFloatingPopup(x, y) {
     left = 10;
   }
   
-  if (top + 400 > viewportHeight) {
-    top = y - 405;
-  }
   if (top < 10) {
     top = 10;
   }
@@ -64,6 +60,23 @@ function createFloatingPopup(x, y) {
   floatingPopup.style.top = `${top}px`;
 
   document.body.appendChild(floatingPopup);
+
+  floatingPopup.addEventListener('load', () => {
+    setTimeout(() => {
+      try {
+        const iframeDoc = floatingPopup.contentDocument || floatingPopup.contentWindow.document;
+        const height = iframeDoc.body.scrollHeight;
+        floatingPopup.style.height = Math.min(height + 10, 500) + 'px';
+        
+        if (top + height > viewportHeight) {
+          const newTop = Math.max(10, viewportHeight - height - 20);
+          floatingPopup.style.top = newTop + 'px';
+        }
+      } catch (e) {
+        floatingPopup.style.height = '300px';
+      }
+    }, 300);
+  });
 }
 
 document.addEventListener("keydown", async (e) => {
