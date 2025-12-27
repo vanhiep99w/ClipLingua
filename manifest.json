@@ -31,6 +31,12 @@
       "run_at": "document_idle"
     }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["floating-popup.html", "floating-popup.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "commands": {
     "translate-selection": {
       "suggested_key": {
