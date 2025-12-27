@@ -34,10 +34,8 @@ function createFloatingPopup(x, y) {
     position: fixed;
     z-index: 2147483647;
     border: none;
-    width: 400px;
-    height: auto;
-    min-height: 150px;
-    max-height: 500px;
+    width: 380px;
+    height: 400px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     border-radius: 8px;
   `;
@@ -45,27 +43,27 @@ function createFloatingPopup(x, y) {
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   
-  let left = x + 10;
-  let top = y + 10;
+  let left = x + 15;
+  let top = y + 5;
 
-  if (left + 400 > viewportWidth) {
-    left = viewportWidth - 410;
+  if (left + 380 > viewportWidth) {
+    left = x - 395;
   }
-  if (top + 300 > viewportHeight) {
-    top = y - 310;
+  if (left < 10) {
+    left = 10;
+  }
+  
+  if (top + 400 > viewportHeight) {
+    top = y - 405;
+  }
+  if (top < 10) {
+    top = 10;
   }
 
-  floatingPopup.style.left = `${Math.max(10, left)}px`;
-  floatingPopup.style.top = `${Math.max(10, top)}px`;
+  floatingPopup.style.left = `${left}px`;
+  floatingPopup.style.top = `${top}px`;
 
   document.body.appendChild(floatingPopup);
-
-  setTimeout(() => {
-    if (floatingPopup) {
-      const iframe = floatingPopup;
-      iframe.style.height = (iframe.contentWindow.document.body.scrollHeight + 20) + 'px';
-    }
-  }, 100);
 }
 
 document.addEventListener("keydown", async (e) => {
