@@ -70,7 +70,7 @@ function createFloatingPopup(x, y) {
       const body = iframeDoc.body;
       
       if (body && body.scrollHeight > 0) {
-        const height = Math.min(body.scrollHeight, 600);
+        const height = Math.min(body.scrollHeight + 20, 600);
         floatingPopup.style.height = height + 'px';
         
         if (top + height > viewportHeight) {
@@ -83,7 +83,7 @@ function createFloatingPopup(x, y) {
         setTimeout(adjustHeight, 50);
       }
     } catch (e) {
-      floatingPopup.style.height = '250px';
+      floatingPopup.style.height = '280px';
       floatingPopup.style.opacity = '1';
     }
   };
